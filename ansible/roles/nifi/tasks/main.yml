@@ -1,0 +1,51 @@
+- name: Install requirements
+  apt: 
+    name: openjdk-8-jdk-headless
+    state: present
+
+- name: Install Nifi
+  ignore_unreachable: yes
+  shell: "{{ item }}"
+  with_items:
+    - chdir /tmp
+    - wget https://apache-mirror.rbc.ru/pub/apache/nifi/1.13.1/nifi-1.13.1-bin.tar.gz
+    - tar vzxf nifi-1.13.1-bin.tar.gz
+    - rm -f nifi-1.13.1-bin.tar.gz
+    - sudo mv -vnu nifi-1.13.1 /opt
+    - chdir /opt/nifi-1.13.1
+    - sudo /opt/nifi-1.13.1/bin/nifi.sh install
+    - rm -f /opt/nifi-1.13.1/conf/nifi.properties
+    - rm -f /opt/nifi-1.13.1/conf/logback.xml
+
+- name: Create server service
+  ansible.builtin.copy:
+    src: "nifi"
+    dest: /etc/systemd/system/nifi.service
+
+- name: Update Properties
+  ansible.builtin.copy:
+    src: "nifi.properties"
+    dest: /opt/nifi-1.13.1/conf/nifi.properties
+
+- name: Update Logback file
+  ansible.builtin.copy:
+    src: "logback.xml"
+    dest: /opt/nifi-1.13.1/conf/logback.xml
+
+- name: Reload units
+  shell: systemctl daemon-reload
+
+#- name: Enable service nifi
+#  ansible.builtin.shell: systemctl enable nifi
+#  args:
+#    executable: /bin/bash
+
+- name: Start service nifi
+  ansible.builtin.shell: systemctl start nifi
+  args:
+    executable: /bin/bash
+
+- name: Stop nginx 
+  ansible.builtin.service:
+    name: nginx
+    state: stopped

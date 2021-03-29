@@ -1,0 +1,18 @@
+- name: Install nginx
+  apt: 
+    name: nginx
+    state: present
+
+- name: Copy configs
+  ansible.builtin.copy:
+    src: "{{file_location}}/default"
+    dest: /etc/nginx/sites-enabled/default
+
+- name: Check that service Nginx is started
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: yes 
+
+- name: Reload nginx
+  shell: nginx -s reload
